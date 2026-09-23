@@ -80,6 +80,7 @@ enum class NumberFormat : u32 {
     UbnormNz = 11,
     Ubint = 12,
     Ubscaled = 13,
+    Reserved = 15,
 };
 
 enum class NumberClass : u8 {
@@ -205,6 +206,10 @@ constexpr DataFormat RemapDataFormat(const DataFormat format) {
         return DataFormat::Format2_10_10_10;
     case DataFormat::Format5_5_5_1:
         return DataFormat::Format1_5_5_5;
+    case DataFormat::Format32_As_32_32_32_32:
+        // This image-only format exposes a 32-bit element as four 32-bit
+        // components. Use the equivalent Vulkan surface representation.
+        return DataFormat::Format32_32_32_32;
     default:
         return format;
     }
@@ -241,6 +246,12 @@ constexpr NumberFormat RemapNumberFormat(const NumberFormat format, const DataFo
         return NumberFormat::Sint;
     case NumberFormat::Ubnorm:
         return NumberFormat::Unorm;
+    case NumberFormat::Reserved:
+        // AMD uses this encoding with 32_AS_32_32_32_32 for raw 128-bit
+        // accesses. Preserve the bits through an unsigned integer format;
+        // other reserved combinations remain unsupported.
+        return data_format == DataFormat::Format32_As_32_32_32_32 ? NumberFormat::Uint
+                                                                   : format;
     case NumberFormat::Float:
         if (data_format == DataFormat::Format8) {
             // Games may ask for 8-bit float when they want to access the stencil component
@@ -253,6 +264,13 @@ constexpr NumberFormat RemapNumberFormat(const NumberFormat format, const DataFo
         return format;
     }
 }
+
+static_assert(RemapDataFormat(DataFormat::Format32_As_32_32_32_32) ==
+              DataFormat::Format32_32_32_32);
+static_assert(RemapNumberFormat(NumberFormat::Reserved,
+                                DataFormat::Format32_As_32_32_32_32) == NumberFormat::Uint);
+static_assert(RemapNumberFormat(NumberFormat::Reserved, DataFormat::Format8) ==
+              NumberFormat::Reserved);
 
 constexpr CompMapping RemapSwizzle(const DataFormat format, const CompMapping swizzle) {
     switch (format) {

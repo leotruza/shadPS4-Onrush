@@ -781,6 +781,14 @@ static auto surface_format_table = []() constexpr {
 }();
 
 vk::Format SurfaceFormat(AmdGpu::DataFormat data_format, AmdGpu::NumberFormat num_format) {
+    // Some image descriptors use the image-only 32_AS_32_32_32_32 data
+    // format with the reserved numeric format to request a raw 128-bit
+    // access. Canonicalize descriptor encodings before looking them up;
+    // unsupported reserved combinations still resolve to eUndefined and
+    // are rejected below.
+    const auto raw_data_format = data_format;
+    data_format = AmdGpu::RemapDataFormat(data_format);
+    num_format = AmdGpu::RemapNumberFormat(num_format, raw_data_format);
     vk::Format result = surface_format_table[GetSurfaceFormatTableIndex(data_format, num_format)];
     bool found =
         result != vk::Format::eUndefined || data_format == AmdGpu::DataFormat::FormatInvalid;

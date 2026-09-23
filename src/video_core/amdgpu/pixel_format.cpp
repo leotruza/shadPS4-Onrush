@@ -73,6 +73,12 @@ std::string_view NameOf(DataFormat fmt) {
         return "FormatBc6";
     case DataFormat::FormatBc7:
         return "FormatBc7";
+    case DataFormat::Format32_As_8:
+        return "Format32_As_8";
+    case DataFormat::Format32_As_8_8:
+        return "Format32_As_8_8";
+    case DataFormat::Format32_As_32_32_32_32:
+        return "Format32_As_32_32_32_32";
     default:
         UNREACHABLE();
     }
@@ -106,6 +112,8 @@ std::string_view NameOf(NumberFormat fmt) {
         return "Ubint";
     case NumberFormat::Ubscaled:
         return "Unscaled";
+    case NumberFormat::Reserved:
+        return "Reserved";
     default:
         UNREACHABLE();
     }
